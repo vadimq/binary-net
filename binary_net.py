@@ -11,3 +11,11 @@ def sign(x, clip=False):
 class Clip(tf.keras.constraints.Constraint):
     def __call__(self, w):
         return tf.clip_by_value(w, -1, 1)
+
+class Dense(tf.keras.layers.Dense):
+    def call(self, inputs):
+        Wr = self.kernel
+        self.kernel = sign(self.kernel)
+        rvalue = super(Dense, self).call(inputs)
+        self.kernel = Wr
+        return rvalue
