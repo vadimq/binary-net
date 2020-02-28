@@ -26,10 +26,10 @@ y = np.array([[1, 1, 1, 1, 1, 1, 0],
 model = tf.keras.Sequential([
     binary_net.Dense(100, kernel_constraint=binary_net.Clip()),
     tf.keras.layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False),
-    tf.keras.layers.Activation(binary_net.sign),
+    tf.keras.layers.Activation(binary_net.sign_clipped_d),
     binary_net.Dense(100, kernel_constraint=binary_net.Clip()),
     tf.keras.layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False),
-    tf.keras.layers.Activation(binary_net.sign),
+    tf.keras.layers.Activation(binary_net.sign_clipped_d),
     binary_net.Dense(y.shape[1], kernel_constraint=binary_net.Clip()),
     tf.keras.layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False)])
 
