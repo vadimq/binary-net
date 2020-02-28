@@ -36,3 +36,8 @@ model = tf.keras.Sequential([
 model.compile(optimizer=tf.train.AdamOptimizer(learning_rate=.03),
               loss=tf.keras.losses.squared_hinge,
               metrics=[tf.keras.losses.squared_hinge])
+
+model.fit(x, y, batch_size=10, epochs=500)
+
+y_ = model.predict(x)
+print(np.sum(np.sign(y_) == y) / y.size)
