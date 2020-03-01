@@ -5,6 +5,11 @@ import binary_net
 
 # tf.enable_eager_execution()
 
+batch_size = 10
+epochs = 500
+initial_learning_rate = .03
+decay_rate = .000003 / initial_learning_rate
+
 ki1 = 'glorot_uniform'
 ki2 = 'glorot_uniform'
 ki3 = 'glorot_uniform'
@@ -42,11 +47,15 @@ model = tf.keras.Sequential([
     binary_net.Dense(y.shape[1], use_bias=False, kernel_initializer=ki3, kernel_constraint=binary_net.Clip()),
     layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False)])
 
-model.compile(optimizer=tf.train.AdamOptimizer(learning_rate=.03),
+model.compile(optimizer=tf.keras.optimizers.Adam(),
               loss=tf.keras.losses.squared_hinge,
               metrics=[tf.keras.losses.squared_hinge])
 
-model.fit(x, y, batch_size=10, epochs=500)
+def scheduler(epoch):
+    return initial_learning_rate * np.power(decay_rate, epoch / epochs)
+callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
+
+model.fit(x, y, batch_size=batch_size, epochs=epochs, callbacks=[callback])
 
 y_ = model.predict(x)
 print(np.sum(np.sign(y_) == y) / y.size)
