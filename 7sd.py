@@ -3,8 +3,6 @@ import tensorflow as tf
 from tensorflow.keras import layers
 import binary_net
 
-# tf.enable_eager_execution()
-
 batch_size = 10
 epochs = 500
 initial_learning_rate = .03
@@ -34,8 +32,6 @@ y = np.array([[1, 1, 1, 1, 1, 1, 0],
               [1, 1, 1, 0, 0, 0, 0],
               [1, 1, 1, 1, 1, 1, 1],
               [1, 1, 1, 0, 0, 1, 1]]) * 2 - 1
-# x = tf.convert_to_tensor(x, dtype=tf.float32)
-# y = tf.convert_to_tensor(y, dtype=tf.float32)
 
 model = tf.keras.Sequential([
     binary_net.Dense(100, use_bias=False, kernel_initializer=ki1, kernel_constraint=binary_net.Clip()),
@@ -47,7 +43,7 @@ model = tf.keras.Sequential([
     binary_net.Dense(y.shape[1], use_bias=False, kernel_initializer=ki3, kernel_constraint=binary_net.Clip()),
     layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False)])
 
-model.compile(optimizer=tf.keras.optimizers.Adam(),
+model.compile(optimizer=tf.keras.optimizers.Adam(.03, epsilon=1e-8),
               loss=tf.keras.losses.squared_hinge,
               metrics=[tf.keras.losses.squared_hinge])
 
@@ -55,7 +51,10 @@ def scheduler(epoch):
     return initial_learning_rate * np.power(decay_rate, epoch / epochs)
 callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
-model.fit(x, y, batch_size=batch_size, epochs=epochs, callbacks=[callback])
+# model.fit(x, y, batch_size=batch_size, epochs=epochs, callbacks=[callback])
+for i in range(3):
+    model.fit(x, y, batch_size=batch_size, epochs=1)
+    print(model(x, training=True))
 
 y_ = model.predict(x)
 print(np.sum(np.sign(y_) == y) / y.size)

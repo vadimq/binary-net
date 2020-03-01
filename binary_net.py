@@ -1,5 +1,4 @@
 import tensorflow as tf
-# tf.enable_eager_execution()
 
 @tf.custom_gradient
 def sign_clipped_d(x):
