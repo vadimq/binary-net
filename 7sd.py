@@ -43,15 +43,14 @@ model = tf.keras.Sequential([
     binary_net.Dense(y.shape[1], use_bias=False, kernel_initializer=ki3, kernel_constraint=binary_net.Clip()),
     layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False)])
 
-model.compile(optimizer=tf.keras.optimizers.Adam(.03, epsilon=1e-8),
+lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate, epochs, decay_rate)
+# lr_schedule = .03
+
+model.compile(optimizer=tf.keras.optimizers.Adam(lr_schedule, epsilon=1e-8),
               loss=tf.keras.losses.squared_hinge,
               metrics=[tf.keras.losses.squared_hinge])
 
-def scheduler(epoch):
-    return initial_learning_rate * np.power(decay_rate, epoch / epochs)
-callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
-
-# model.fit(x, y, batch_size=batch_size, epochs=epochs, callbacks=[callback])
+# model.fit(x, y, batch_size=batch_size, epochs=epochs)
 for i in range(3):
     model.fit(x, y, batch_size=batch_size, epochs=1)
     print(model(x, training=True))
