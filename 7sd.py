@@ -34,13 +34,13 @@ y = np.array([[1, 1, 1, 1, 1, 1, 0],
               [1, 1, 1, 0, 0, 1, 1]]) * 2 - 1
 
 model = tf.keras.Sequential([
-    binary_net.Dense(100, use_bias=False, kernel_initializer=ki1, kernel_constraint=binary_net.Clip()),
+    binary_net.Dense(100, use_bias=False, kernel_initializer=ki1),
     layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False),
     layers.Activation(binary_net.sign_d_clipped),
-    binary_net.Dense(100, use_bias=False, kernel_initializer=ki2, kernel_constraint=binary_net.Clip()),
+    binary_net.Dense(100, use_bias=False, kernel_initializer=ki2),
     layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False),
     layers.Activation(binary_net.sign_d_clipped),
-    binary_net.Dense(y.shape[1], use_bias=False, kernel_initializer=ki3, kernel_constraint=binary_net.Clip()),
+    binary_net.Dense(y.shape[1], use_bias=False, kernel_initializer=ki3),
     layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False)])
 
 lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate, epochs, decay_rate)
@@ -66,7 +66,7 @@ print(np.sum(np.sign(y_) == y) / y.size)
 model.build(x.shape)
 
 for i in range(3):
-    w = [(l.kernel, tf.identity(l.kernel)) for l in model.layers if hasattr(l, 'kernel')]
+    w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers if hasattr(l, 'kernel')]
 
     with tf.GradientTape() as tape:
         y_ = model(x, training=True)
@@ -76,6 +76,8 @@ for i in range(3):
     opt.apply_gradients(zip(grads, vars))
 
     for e in w:
-        e[0].assign(e[1] + (e[0] - e[1]))
+        val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
+        val = tf.clip_by_value(val, -1, 1)
+        e[1].assign(val)
 
     print(model(x, training=True))

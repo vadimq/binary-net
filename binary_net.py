@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 @tf.custom_gradient
@@ -24,6 +25,11 @@ class Clip(tf.keras.constraints.Constraint):
         return tf.clip_by_value(w, -1, 1)
 
 class Dense(tf.keras.layers.Dense):
+    def build(self, input_shape):
+        super(Dense, self).build(input_shape)
+        self.w_lr_scale = tf.cast(1 / np.sqrt(1.5 / (input_shape[-1] + self.units)), self.dtype)
+        # print(self.w_lr_scale)
+
     def call(self, inputs):
         kernel = self.kernel
         # self.kernel = sign(self.kernel)
