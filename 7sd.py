@@ -45,8 +45,10 @@ model = tf.keras.Sequential([
 
 lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate, epochs, decay_rate)
 # lr_schedule = .03
+opt = tf.keras.optimizers.Adam(lr_schedule, epsilon=1e-8)
 
-model.compile(optimizer=tf.keras.optimizers.Adam(lr_schedule, epsilon=1e-8),
+'''
+model.compile(optimizer=opt,
               loss=tf.keras.losses.squared_hinge,
               metrics=[tf.keras.losses.squared_hinge])
 
@@ -57,3 +59,23 @@ for i in range(3):
 
 y_ = model.predict(x)
 print(np.sum(np.sign(y_) == y) / y.size)
+'''
+
+################################################################################
+
+model.build(x.shape)
+
+for i in range(3):
+    w = [(l.kernel, tf.identity(l.kernel)) for l in model.layers if hasattr(l, 'kernel')]
+
+    with tf.GradientTape() as tape:
+        y_ = model(x, training=True)
+        loss = tf.reduce_mean(tf.keras.losses.squared_hinge(y, y_))
+    vars = model.trainable_variables
+    grads = tape.gradient(loss, vars)
+    opt.apply_gradients(zip(grads, vars))
+
+    for e in w:
+        e[0].assign(e[1] + (e[0] - e[1]))
+
+    print(model(x, training=True))
