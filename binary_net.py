@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 @tf.custom_gradient
-def sign_clipped_d(x):
+def sign_d_clipped(x):
     def grad(dy):
         return tf.where(tf.abs(x) <= 1, dy, tf.zeros_like(x))
     return tf.where(x < 0, -tf.ones_like(x), tf.ones_like(x)), grad
