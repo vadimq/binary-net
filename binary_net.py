@@ -25,10 +25,14 @@ class Clip(tf.keras.constraints.Constraint):
         return tf.clip_by_value(w, -1, 1)
 
 class Dense(tf.keras.layers.Dense):
+    def __init__(self, units, w_lr_scale='Glorot', **kwargs):
+        super(Dense, self).__init__(units, **kwargs)
+        self.w_lr_scale = w_lr_scale
+
     def build(self, input_shape):
         super(Dense, self).build(input_shape)
-        self.w_lr_scale = tf.cast(1 / np.sqrt(1.5 / (input_shape[-1] + self.units)), self.dtype)
-        # print(self.w_lr_scale)
+        if self.w_lr_scale == 'Glorot':
+            self.w_lr_scale = tf.cast(1 / np.sqrt(1.5 / (input_shape[-1] + self.units)), self.dtype)
 
     def call(self, inputs):
         kernel = self.kernel
