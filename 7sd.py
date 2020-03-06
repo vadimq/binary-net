@@ -7,6 +7,7 @@ batch_size = 10
 epochs = 500
 dropout_in = 0
 dropout_hidden = 0
+ternary_thresh = .1
 w_lr_scale = 'Glorot'
 initial_learning_rate = .03
 decay_rate = .000003 / initial_learning_rate
@@ -39,17 +40,17 @@ y = np.array([[1, 1, 1, 1, 1, 1, 0],
 model = tf.keras.Sequential([
     layers.Dropout(dropout_in),
     # binary_net.Dense(100, use_bias=False, kernel_initializer=ki1, kernel_constraint=binary_net.Clip()),
-    binary_net.Dense(100, w_lr_scale=w_lr_scale, use_bias=False, kernel_initializer=ki1),
+    binary_net.Dense(100, ternary_thresh, w_lr_scale, use_bias=False, kernel_initializer=ki1),
     layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False),
     layers.Activation(binary_net.sign_d_clipped),
     layers.Dropout(dropout_hidden),
     # binary_net.Dense(100, use_bias=False, kernel_initializer=ki2, kernel_constraint=binary_net.Clip()),
-    binary_net.Dense(100, w_lr_scale=w_lr_scale, use_bias=False, kernel_initializer=ki2),
+    binary_net.Dense(100, ternary_thresh, w_lr_scale, use_bias=False, kernel_initializer=ki2),
     layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False),
     layers.Activation(binary_net.sign_d_clipped),
     layers.Dropout(dropout_hidden),
     # binary_net.Dense(y.shape[1], use_bias=False, kernel_initializer=ki3, kernel_constraint=binary_net.Clip()),
-    binary_net.Dense(y.shape[1], w_lr_scale=w_lr_scale, use_bias=False, kernel_initializer=ki3),
+    binary_net.Dense(y.shape[1], ternary_thresh, w_lr_scale, use_bias=False, kernel_initializer=ki3),
     layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False)])
 
 lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate, epochs, decay_rate)
