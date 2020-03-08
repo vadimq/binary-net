@@ -3,6 +3,7 @@ from tensorflow.keras import layers
 import binary_net
 
 batch_size = 100
+momentum = .9
 units = 4096
 hidden_layers = 3
 epochs = 1000
@@ -34,11 +35,11 @@ inputs = tf.keras.Input(shape=(784,))
 x = layers.Dropout(dropout_in)(inputs)
 for i in range(hidden_layers):
     x = binary_net.Dense(units, w_lr_scale=w_lr_scale, use_bias=False)(x)
-    x = layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False)(x)
+    x = layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False)(x)
     x = layers.Activation(binary_net.sign_d_clipped)(x)
     x = layers.Dropout(dropout_hidden)(x)
 x = binary_net.Dense(10, w_lr_scale=w_lr_scale, use_bias=False)(x)
-outputs = layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False)(x)
+outputs = layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False)(x)
 model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
 lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate, epochs, decay_rate)

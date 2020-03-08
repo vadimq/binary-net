@@ -4,6 +4,7 @@ from tensorflow.keras import layers
 import binary_net
 
 batch_size = 10
+momentum = .9
 epochs = 500
 dropout_in = 0
 dropout_hidden = 0
@@ -42,17 +43,17 @@ model = tf.keras.Sequential([
     layers.Dropout(dropout_in),
     # binary_net.Dense(100, use_bias=False, kernel_initializer=ki1, kernel_constraint=binary_net.Clip()),
     binary_net.Dense(100, ternary_thresh, w_lr_scale, use_bias=False, kernel_initializer=ki1),
-    layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False),
+    layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False),
     layers.Activation(binary_net.sign_d_clipped),
     layers.Dropout(dropout_hidden),
     # binary_net.Dense(100, use_bias=False, kernel_initializer=ki2, kernel_constraint=binary_net.Clip()),
     binary_net.Dense(100, ternary_thresh, w_lr_scale, use_bias=False, kernel_initializer=ki2),
-    layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False),
+    layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False),
     layers.Activation(binary_net.sign_d_clipped),
     layers.Dropout(dropout_hidden),
     # binary_net.Dense(y.shape[1], use_bias=False, kernel_initializer=ki3, kernel_constraint=binary_net.Clip()),
     binary_net.Dense(y.shape[1], ternary_thresh, w_lr_scale, use_bias=False, kernel_initializer=ki3),
-    layers.BatchNormalization(momentum=.9, epsilon=1e-4, center=False, scale=False)])
+    layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False)])
 
 lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate, epochs, decay_rate)
 # lr_schedule = .03
