@@ -59,11 +59,11 @@ lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_ra
 # lr_schedule = .03
 opt = tf.keras.optimizers.Adam(lr_schedule, epsilon=1e-8)
 
-'''
 model.compile(optimizer=opt,
               loss=tf.keras.losses.squared_hinge,
               metrics=[tf.keras.losses.squared_hinge])
 
+'''
 # model.fit(x, y, batch_size=batch_size, epochs=epochs)
 for i in range(3):
     model.fit(x, y, batch_size=batch_size, epochs=1)
@@ -74,8 +74,6 @@ print(np.sum(np.sign(y_) == y) / y.size)
 '''
 
 ################################################################################
-
-model.build(x.shape)
 
 @tf.function
 def train(num_steps):
