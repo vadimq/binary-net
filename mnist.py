@@ -49,7 +49,8 @@ opt = tf.keras.optimizers.Adam(lr_schedule, epsilon=1e-8)
 
 model.compile(optimizer=opt,
               loss=tf.keras.losses.squared_hinge,
-              metrics=[tf.keras.losses.squared_hinge])
+              metrics=[tf.keras.losses.squared_hinge,
+                       tf.keras.metrics.CategoricalAccuracy()])
 
 print('Training...')
 
@@ -58,6 +59,7 @@ print('Training...')
 ################################################################################
 
 x_train, y_train = x_train[:500], y_train[:500]
+x_val, y_val = x_val[:200], y_val[:200]
 
 def shuffle(x, y):
     order = np.random.permutation(x.shape[0])
@@ -91,5 +93,7 @@ def train(num_steps):
             y_train_slice = y_train[i * batch_size:(i + 1) * batch_size]
             loss += train_batch(x_train_slice, y_train_slice)
         loss /= batches
+
         print("Training loss: {}".format(loss))
+        model.evaluate(x_val, y_val, batch_size=batch_size)
 train(2)
