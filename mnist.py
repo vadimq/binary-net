@@ -59,28 +59,26 @@ print('Training...')
 x_train, y_train = x_train[:500], y_train[:500]
 
 @tf.function
-def train_epoch():
-    batches = x_train.shape[0] // batch_size
-    for i in tf.range(batches):
-        x_train_slice = tf.slice(x_train, [i * batch_size, 0], [batch_size, -1])
-        y_train_slice = tf.slice(y_train, [i * batch_size, 0], [batch_size, -1])
+def train_batch(x_train_slice, y_train_slice):
+    w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers if hasattr(l, 'kernel')]
 
-        w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers if hasattr(l, 'kernel')]
+    with tf.GradientTape() as tape:
+        y_ = model(x_train_slice, training=True)
+        loss = tf.reduce_mean(tf.keras.losses.squared_hinge(y_train_slice, y_))
+    vars = model.trainable_variables
+    grads = tape.gradient(loss, vars)
+    opt.apply_gradients(zip(grads, vars))
 
-        with tf.GradientTape() as tape:
-            y_ = model(x_train_slice, training=True)
-            loss = tf.reduce_mean(tf.keras.losses.squared_hinge(y_train_slice, y_))
-        vars = model.trainable_variables
-        grads = tape.gradient(loss, vars)
-        opt.apply_gradients(zip(grads, vars))
+    for e in w:
+        val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
+        val = tf.clip_by_value(val, -1, 1)
+        e[1].assign(val)
 
-        for e in w:
-            val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
-            val = tf.clip_by_value(val, -1, 1)
-            e[1].assign(val)
-
-@tf.function
 def train(num_steps):
-    for _ in tf.range(num_steps):
-        train_epoch()
+    batches = x_train.shape[0] // batch_size
+    for _ in range(num_steps):
+        for i in range(batches):
+            x_train_slice = x_train[i * batch_size:(i + 1) * batch_size]
+            y_train_slice = y_train[i * batch_size:(i + 1) * batch_size]
+            train_batch(x_train_slice, y_train_slice)
 train(1)
