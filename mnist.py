@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 import binary_net
@@ -24,8 +25,8 @@ x_train = 2 * (x_train.reshape(-1, 784) / 255) - 1
 x_test = 2 * (x_test.reshape(-1, 784) / 255) - 1
 
 # Convert to {-1, 1}.
-y_train = 2 * tf.one_hot(y_train, 10) - 1
-y_test = 2 * tf.one_hot(y_test, 10) - 1
+y_train = (2 * tf.one_hot(y_train, 10) - 1).numpy()
+y_test = (2 * tf.one_hot(y_test, 10) - 1).numpy()
 
 x_val, x_train = x_train[50000:], x_train[:50000]
 y_val, y_train = y_train[50000:], y_train[:50000]
@@ -58,6 +59,10 @@ print('Training...')
 
 x_train, y_train = x_train[:500], y_train[:500]
 
+def shuffle(x, y):
+    order = np.random.permutation(x.shape[0])
+    return x[order], y[order]
+
 @tf.function
 def train_batch(x_train_slice, y_train_slice):
     w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers if hasattr(l, 'kernel')]
@@ -75,8 +80,10 @@ def train_batch(x_train_slice, y_train_slice):
         e[1].assign(val)
 
 def train(num_steps):
+    global x_train, y_train
     batches = x_train.shape[0] // batch_size
     for _ in range(num_steps):
+        x_train, y_train = shuffle(x_train, y_train)
         for i in range(batches):
             x_train_slice = x_train[i * batch_size:(i + 1) * batch_size]
             y_train_slice = y_train[i * batch_size:(i + 1) * batch_size]
