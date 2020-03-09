@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
+import time
 import binary_net
 
 batch_size = 100
@@ -82,18 +83,22 @@ def train_batch(x_train_slice, y_train_slice):
         e[1].assign(val)
     return loss
 
-def train(num_steps):
+def train(num_epochs):
     global x_train, y_train
     batches = x_train.shape[0] // batch_size
-    for _ in range(num_steps):
+    for i in range(num_epochs):
+        start = time.time()
         x_train, y_train = shuffle(x_train, y_train)
         loss = 0
-        for i in range(batches):
-            x_train_slice = x_train[i * batch_size:(i + 1) * batch_size]
-            y_train_slice = y_train[i * batch_size:(i + 1) * batch_size]
+        for j in range(batches):
+            x_train_slice = x_train[j * batch_size:(j + 1) * batch_size]
+            y_train_slice = y_train[j * batch_size:(j + 1) * batch_size]
             loss += train_batch(x_train_slice, y_train_slice)
         loss /= batches
 
-        print("Training loss: {}".format(loss))
         model.evaluate(x_val, y_val, batch_size=batch_size)
+
+        end = time.time()
+        print("Epoch {} of {} took {} s.".format(i, num_epochs, end - start))
+        print("Training loss: {}".format(loss))
 train(2)
