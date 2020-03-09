@@ -78,14 +78,18 @@ def train_batch(x_train_slice, y_train_slice):
         val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
         val = tf.clip_by_value(val, -1, 1)
         e[1].assign(val)
+    return loss
 
 def train(num_steps):
     global x_train, y_train
     batches = x_train.shape[0] // batch_size
     for _ in range(num_steps):
         x_train, y_train = shuffle(x_train, y_train)
+        loss = 0
         for i in range(batches):
             x_train_slice = x_train[i * batch_size:(i + 1) * batch_size]
             y_train_slice = y_train[i * batch_size:(i + 1) * batch_size]
-            train_batch(x_train_slice, y_train_slice)
-train(1)
+            loss += train_batch(x_train_slice, y_train_slice)
+        loss /= batches
+        print("Training loss: {}".format(loss))
+train(2)
