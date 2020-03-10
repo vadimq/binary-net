@@ -12,6 +12,7 @@ hidden_layers = 3
 epochs = 1000
 dropout_in = 0
 dropout_hidden = 0
+# w_lr_scale = 1
 w_lr_scale = 'Glorot'
 initial_learning_rate = .003
 decay_rate = .0000003 / initial_learning_rate
@@ -85,6 +86,8 @@ def train_batch(x_train_slice, y_train_slice):
 
 def train(num_epochs):
     global x_train, y_train
+    best_val_err = 100
+    best_epoch = 1
     batches = x_train.shape[0] // batch_size
     for i in range(num_epochs):
         start = time.time()
@@ -96,9 +99,17 @@ def train(num_epochs):
             loss += train_batch(x_train_slice, y_train_slice)
         loss /= batches
 
-        model.evaluate(x_val, y_val, batch_size=batch_size)
+        result = model.evaluate(x_val, y_val, batch_size=batch_size, verbose=0)
+        result[2] = (1 - result[2]) * 100
+        if result[2] <= best_val_err:
+            best_val_err = result[2]
+            best_epoch = i + 1
 
-        end = time.time()
-        print("Epoch {} of {} took {} s.".format(i, num_epochs, end - start))
-        print("Training loss: {}".format(loss))
-train(2)
+        duration = time.time() - start
+        print("Epoch {} of {} took {} s.".format(i + 1, num_epochs, duration))
+        print("  training loss:              {}".format(loss))
+        print("  validation loss:            {}".format(result[0]))
+        print("  validation error rate:      {}%".format(result[2]))
+        print("  best epoch:                 {}".format(best_epoch))
+        print("  best validation error rate: {}%".format(best_val_err))
+train(epochs)
