@@ -111,7 +111,7 @@ def train(num_epochs):
 
         duration = time.time() - start
         print("Epoch {} of {} took {} s.".format(i + 1, num_epochs, duration))
-        print(model(x_val, training=True)[:2])
+        print(model(x_val[:100], training=True)[:10])
         print("  training loss:              {}".format(loss))
         print("  validation loss:            {}".format(result[0]))
         print("  validation error rate:      {}%".format(result[2]))
