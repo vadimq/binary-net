@@ -15,8 +15,9 @@ dropout_in = 0
 dropout_hidden = 0
 # w_lr_scale = 1
 w_lr_scale = 'Glorot'
-initial_learning_rate = .003
-decay_rate = .0000003 / initial_learning_rate
+lr_initial = .003
+lr_final = .0000003
+lr_decay = (lr_final / lr_initial) ** (1 / epochs)
 
 w = np.load(r"..\BinaryNet\Train-time\weights.npz")
 init = [tf.constant_initializer(w["arr_{}".format(i)]) for i in range(len(w))]
@@ -50,8 +51,11 @@ x = binary_net.Dense(10, w_lr_scale=w_lr_scale, use_bias=False, kernel_initializ
 outputs = layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False)(x)
 model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
-lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate, epochs, decay_rate)
-opt = tf.keras.optimizers.Adam(lr_schedule, epsilon=1e-8)
+def schedule(epoch, lr):
+    return lr * lr_decay
+callback = tf.keras.callbacks.LearningRateScheduler(schedule)
+callback.set_model(model)
+opt = tf.keras.optimizers.Adam(lr_initial / lr_decay, epsilon=1e-8)
 
 model.compile(optimizer=opt,
               loss=tf.keras.losses.squared_hinge,
@@ -60,7 +64,7 @@ model.compile(optimizer=opt,
 
 print('Training...')
 
-# model.fit(x_train, y_train, batch_size=batch_size, epochs=1, validation_data=(x_val, y_val))
+# model.fit(x_train, y_train, batch_size=batch_size, epochs=1, callbacks=[callback], validation_data=(x_val, y_val))
 
 ################################################################################
 
@@ -95,7 +99,9 @@ def train(num_epochs):
     batches = x_train.shape[0] // batch_size
     for i in range(num_epochs):
         start = time.time()
+        callback.on_epoch_begin(i)
         # x_train, y_train = shuffle(x_train, y_train)
+
         loss = 0
         for j in range(batches):
             x_train_slice = x_train[j * batch_size:(j + 1) * batch_size]
@@ -110,8 +116,10 @@ def train(num_epochs):
             best_epoch = i + 1
 
         duration = time.time() - start
+        lr = opt._decayed_lr(tf.float32).numpy()
         print("Epoch {} of {} took {} s.".format(i + 1, num_epochs, duration))
         print(model(x_val[:100], training=True)[:10])
+        print("  LR:                         {}".format(lr))
         print("  training loss:              {}".format(loss))
         print("  validation loss:            {}".format(result[0]))
         print("  validation error rate:      {}%".format(result[2]))
