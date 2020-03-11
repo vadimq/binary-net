@@ -6,12 +6,12 @@ import binary_net
 
 batch_size = 100
 momentum = .9
-# units = 4096
-units = 2048
+# units = 2048
+units = 4096
 hidden_layers = 3
 epochs = 1000
-dropout_in = 0
-dropout_hidden = 0
+dropout_in = .2
+dropout_hidden = .5
 # w_lr_scale = 1
 w_lr_scale = 'Glorot'
 lr_initial = .003
@@ -39,12 +39,12 @@ print('Building the model...')
 inputs = tf.keras.Input(shape=(784,))
 x = layers.Dropout(dropout_in)(inputs)
 for i in range(hidden_layers):
-    x = binary_net.Dense(units, w_lr_scale=w_lr_scale, use_bias=False)(x)
-    x = layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False)(x)
+    x = binary_net.Dense(units, w_lr_scale=w_lr_scale)(x)
+    x = layers.BatchNormalization(momentum=momentum, epsilon=1e-4)(x)
     x = layers.Activation(binary_net.sign_d_clipped)(x)
     x = layers.Dropout(dropout_hidden)(x)
-x = binary_net.Dense(10, w_lr_scale=w_lr_scale, use_bias=False)(x)
-outputs = layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False)(x)
+x = binary_net.Dense(10, w_lr_scale=w_lr_scale)(x)
+outputs = layers.BatchNormalization(momentum=momentum, epsilon=1e-4)(x)
 model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
 def schedule(epoch, lr):
@@ -63,9 +63,6 @@ print('Training...')
 # model.fit(x_train, y_train, batch_size=batch_size, epochs=1, callbacks=[callback], validation_data=(x_val, y_val))
 
 ################################################################################
-
-x_train, y_train = x_train[:500], y_train[:500]
-x_val, y_val = x_val[:200], y_val[:200]
 
 def shuffle(x, y):
     order = np.random.permutation(x.shape[0])
