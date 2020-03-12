@@ -7,10 +7,12 @@ import binary_net
 seed = 0
 batch_size = 100
 momentum = .9
-units = 4096
+# units = 4096
 # units = 2048
+units = 100
 hidden_layers = 3
-epochs = 1000
+# epochs = 1000
+epochs = 5
 dropout_in = .2
 dropout_hidden = .5
 # w_lr_scale = 1
@@ -37,6 +39,9 @@ y_test = (2 * tf.one_hot(y_test, 10) - 1).numpy()
 
 x_val, x_train = x_train[50000:], x_train[:50000]
 y_val, y_train = y_train[50000:], y_train[:50000]
+
+x_train, y_train = x_train[:500], y_train[:500]
+x_val, y_val = x_val[:200], y_val[:200]
 
 print('Building the model...')
 
