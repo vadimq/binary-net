@@ -21,10 +21,6 @@ def quantization(thresh):
         return tf.sign(tf.where(tf.abs(x) < thresh, tf.zeros_like(x), x)), grad
     return q
 
-class Clip(tf.keras.constraints.Constraint):
-    def __call__(self, w):
-        return tf.clip_by_value(w, -1, 1)
-
 class Dense(tf.keras.layers.Dense):
     def __init__(self, units, ternary_thresh=0, w_lr_scale='Glorot', **kwargs):
         super(Dense, self).__init__(units, **kwargs)
@@ -42,3 +38,21 @@ class Dense(tf.keras.layers.Dense):
         rvalue = super(Dense, self).call(inputs)
         self.kernel = kernel
         return rvalue
+
+class Clip(tf.keras.constraints.Constraint):
+    def __call__(self, w):
+        return tf.clip_by_value(w, -1, 1)
+
+class ClippingScaling(tf.keras.callbacks.Callback):
+    def __init__(self):
+        super(ClippingScaling, self).__init__()
+        self.w = None
+
+    def on_train_batch_begin(self, batch, logs=None):
+        self.w = [(l, l.kernel, tf.identity(l.kernel)) for l in self.model.layers if hasattr(l, 'kernel')]
+
+    def on_train_batch_end(self, batch, logs=None):
+        for e in self.w:
+            val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
+            val = tf.clip_by_value(val, -1, 1)
+            e[1].assign(val)

@@ -69,10 +69,11 @@ model.compile(optimizer=opt,
 
 print('Training...')
 
-# model.fit(x_train, y_train, batch_size=batch_size, epochs=1, callbacks=[callback], validation_data=(x_val, y_val))
+model.fit(x_train, y_train, batch_size=batch_size, epochs=2, callbacks=[callback, binary_net.ClippingScaling()], validation_data=(x_val, y_val))
 
 ################################################################################
 
+"""
 def shuffle(x, y):
     order = np.random.permutation(x.shape[0])
     return x[order], y[order]
@@ -127,3 +128,4 @@ def train(num_epochs):
         print("  best epoch:                 {}".format(best_epoch))
         print("  best validation error rate: {}%".format(best_val_err))
 train(epochs)
+"""
