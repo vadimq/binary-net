@@ -44,15 +44,19 @@ class Clip(tf.keras.constraints.Constraint):
         return tf.clip_by_value(w, -1, 1)
 
 class ClippingScaling(tf.keras.callbacks.Callback):
-    def __init__(self):
+    def __init__(self, scale=False):
         super(ClippingScaling, self).__init__()
+        self.scale = scale
         self.w = None
 
     def on_train_batch_begin(self, batch, logs=None):
-        self.w = [(l, l.kernel, tf.identity(l.kernel)) for l in self.model.layers if hasattr(l, 'kernel')]
+        if self.w is None:
+            self.w = [{"layer": l, "w": l.kernel} for l in self.model.layers if hasattr(l, "kernel")]
+        for e in self.w:
+            e["val"] = tf.identity(e["layer"].kernel)
 
     def on_train_batch_end(self, batch, logs=None):
         for e in self.w:
-            val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
+            val = e["val"] + e["layer"].w_lr_scale * (e["w"] - e["val"])
             val = tf.clip_by_value(val, -1, 1)
-            e[1].assign(val)
+            e["w"].assign(val)
