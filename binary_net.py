@@ -51,7 +51,14 @@ class ClippingScaling(tf.keras.callbacks.Callback):
 
     def on_train_batch_begin(self, batch, logs=None):
         if self.w is None:
-            self.w = [{"layer": l, "w": l.kernel} for l in self.model.layers if hasattr(l, "kernel")]
+            self.w = []
+            for l in self.model.layers:
+                if isinstance(l, Dense):
+                    self.w.append({"layer": l, "w": l.kernel})
+                    init = tf.sqrt(6 / (l.input_shape[-1] + l.output_shape[-1]))
+                    # The BinaryConnect paper says that such scaling improves
+                    # the effectiveness, but doesn't say why.
+                    l.w_lr_scale = tf.cast(2 / init, l.dtype)
         for e in self.w:
             e["val"] = tf.identity(e["layer"].kernel)
 
