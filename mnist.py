@@ -4,10 +4,11 @@ from tensorflow.keras import layers
 import time
 import binary_net
 
+seed = 0
 batch_size = 100
 momentum = .9
-# units = 2048
 units = 4096
+# units = 2048
 hidden_layers = 3
 epochs = 1000
 dropout_in = .2
@@ -17,6 +18,9 @@ w_lr_scale = 'Glorot'
 lr_initial = .003
 lr_final = .0000003
 lr_decay = (lr_final / lr_initial) ** (1 / epochs)
+
+np.random.seed(seed)
+tf.random.set_seed(seed)
 
 print('Loading data...')
 
