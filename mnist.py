@@ -14,7 +14,7 @@ epochs = 1000
 dropout_in = .2
 dropout_hidden = .5
 # w_lr_scale = 1
-w_lr_scale = 'Glorot'
+w_lr_scale = "Glorot"
 lr_initial = .003
 lr_final = .0000003
 lr_decay = (lr_final / lr_initial) ** (1 / epochs)
@@ -22,10 +22,10 @@ lr_decay = (lr_final / lr_initial) ** (1 / epochs)
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
-print('Loading data...')
+print("Loading data...")
 
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data(
-    path='mnist.npz')
+    path="mnist.npz")
 
 # Convert to [-1, 1].
 x_train = 2 * (x_train.reshape(-1, 784) / 255) - 1
@@ -38,7 +38,7 @@ y_test = (2 * tf.one_hot(y_test, 10) - 1).numpy()
 x_val, x_train = x_train[50000:], x_train[:50000]
 y_val, y_train = y_train[50000:], y_train[:50000]
 
-print('Building the model...')
+print("Building the model...")
 
 inputs = tf.keras.Input(shape=(784,))
 x = layers.Dropout(dropout_in)(inputs)
@@ -62,7 +62,7 @@ model.compile(optimizer=opt,
               metrics=[tf.keras.losses.squared_hinge,
                        tf.keras.metrics.CategoricalAccuracy()])
 
-print('Training...')
+print("Training...")
 
 # model.fit(x_train, y_train, batch_size=batch_size, epochs=1, callbacks=[callback], validation_data=(x_val, y_val))
 
@@ -74,7 +74,8 @@ def shuffle(x, y):
 
 @tf.function
 def train_batch(x_train_slice, y_train_slice):
-    w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers if isinstance(l, binary_net.Dense)]
+    w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
+         if isinstance(l, binary_net.Dense)]
 
     with tf.GradientTape() as tape:
         y_ = model(x_train_slice, training=True)

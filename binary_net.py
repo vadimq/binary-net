@@ -25,14 +25,14 @@ class Clip(tf.keras.constraints.Constraint):
         return tf.clip_by_value(w, -1, 1)
 
 class Dense(tf.keras.layers.Dense):
-    def __init__(self, units, ternary_thresh=0, w_lr_scale='Glorot', **kwargs):
+    def __init__(self, units, thresh=0, w_lr_scale="Glorot", **kwargs):
         super(Dense, self).__init__(units, **kwargs)
-        self.quantization = quantization(ternary_thresh) if ternary_thresh else sign
+        self.quantization = quantization(thresh) if thresh else sign
         self.w_lr_scale = w_lr_scale
 
     def build(self, input_shape):
         super(Dense, self).build(input_shape)
-        if self.w_lr_scale == 'Glorot':
+        if self.w_lr_scale == "Glorot":
             init = tf.sqrt(6 / (input_shape[-1] + self.units))
             # The BinaryConnect paper says that such scaling improves the
             # effectiveness, but doesn't say why.
