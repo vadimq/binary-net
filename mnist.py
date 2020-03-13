@@ -18,6 +18,7 @@ w_lr_scale = "Glorot"
 lr_initial = .003
 lr_final = .0000003
 lr_decay = (lr_final / lr_initial) ** (1 / epochs)
+save_path = "checkpoints/mnist_parameters"
 
 np.random.seed(seed)
 tf.random.set_seed(seed)
@@ -112,6 +113,9 @@ def train(num_epochs):
         if result[2] <= best_val_err:
             best_val_err = result[2]
             best_epoch = i + 1
+
+            if save_path is not None:
+                model.save_weights(save_path)
 
         duration = time.time() - start
         lr = opt._decayed_lr(tf.float32).numpy()
