@@ -20,10 +20,6 @@ def quantization(thresh):
         return tf.sign(tf.where(tf.abs(x) < thresh, tf.zeros_like(x), x)), grad
     return q
 
-class Clip(tf.keras.constraints.Constraint):
-    def __call__(self, w):
-        return tf.clip_by_value(w, -1, 1)
-
 class Dense(tf.keras.layers.Dense):
     def __init__(self, units, thresh=0, w_lr_scale="Glorot", **kwargs):
         super(Dense, self).__init__(units, **kwargs)
@@ -44,3 +40,7 @@ class Dense(tf.keras.layers.Dense):
         rvalue = super(Dense, self).call(inputs)
         self.kernel = kernel
         return rvalue
+
+class Clip(tf.keras.constraints.Constraint):
+    def __call__(self, w):
+        return tf.clip_by_value(w, -1, 1)

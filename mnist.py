@@ -127,3 +127,4 @@ def train(num_epochs):
         print("  best epoch:                 {}".format(best_epoch))
         print("  best validation error rate: {}%".format(best_val_err))
 train(epochs)
+model.evaluate(x_test, y_test, batch_size=batch_size)
