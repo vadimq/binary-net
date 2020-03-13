@@ -74,7 +74,7 @@ def shuffle(x, y):
 
 @tf.function
 def train_batch(x_train_slice, y_train_slice):
-    w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers if hasattr(l, 'kernel')]
+    w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers if isinstance(l, binary_net.Dense)]
 
     with tf.GradientTape() as tape:
         y_ = model(x_train_slice, training=True)

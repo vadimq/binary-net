@@ -1,4 +1,3 @@
-import numpy as np
 import tensorflow as tf
 
 @tf.custom_gradient
@@ -34,7 +33,10 @@ class Dense(tf.keras.layers.Dense):
     def build(self, input_shape):
         super(Dense, self).build(input_shape)
         if self.w_lr_scale == 'Glorot':
-            self.w_lr_scale = tf.cast(1 / np.sqrt(1.5 / (input_shape[-1] + self.units)), self.dtype)
+            init = tf.sqrt(6 / (input_shape[-1] + self.units))
+            # The BinaryConnect paper says that such scaling improves the
+            # effectiveness, but doesn't say why.
+            self.w_lr_scale = tf.cast(2 / init, self.dtype)
 
     def call(self, inputs):
         kernel = self.kernel
