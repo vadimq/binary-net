@@ -23,7 +23,7 @@ save_path = "checkpoints/mnist_parameters"
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
-print("Loading data...")
+# <codecell>
 
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data(
     path="mnist.npz")
@@ -39,7 +39,7 @@ y_test = (2 * tf.one_hot(y_test, 10) - 1).numpy()
 x_val, x_train = x_train[50000:], x_train[:50000]
 y_val, y_train = y_train[50000:], y_train[:50000]
 
-print("Building the model...")
+# <codecell>
 
 inputs = tf.keras.Input(shape=(784,))
 x = layers.Dropout(dropout_in)(inputs)
@@ -63,11 +63,11 @@ model.compile(optimizer=opt,
               metrics=[tf.keras.losses.squared_hinge,
                        tf.keras.metrics.CategoricalAccuracy()])
 
-print("Training...")
+# <codecell>
 
 # model.fit(x_train, y_train, batch_size=batch_size, epochs=1, callbacks=[callback], validation_data=(x_val, y_val))
 
-################################################################################
+# <codecell>
 
 def shuffle(x, y):
     order = np.random.permutation(x.shape[0])
@@ -126,5 +126,8 @@ def train(num_epochs):
         print("  validation error rate:      {}%".format(result[2]))
         print("  best epoch:                 {}".format(best_epoch))
         print("  best validation error rate: {}%".format(best_val_err))
+
+# <codecell>
+
 train(epochs)
 model.evaluate(x_test, y_test, batch_size=batch_size)
