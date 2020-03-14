@@ -1,3 +1,9 @@
+# !pip install -U tensorflow
+from tensorflow.python.client import device_lib
+# print(device_lib.list_local_devices())
+
+# <codecell>
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
