@@ -35,8 +35,8 @@ tf.random.set_seed(seed)
     path="mnist.npz")
 
 # Convert to [-1, 1].
-x_train = 2 * (x_train.reshape(-1, 784) / 255) - 1
-x_test = 2 * (x_test.reshape(-1, 784) / 255) - 1
+x_train = (2 * (x_train.reshape(-1, 784) / 255) - 1).astype(np.float32)
+x_test = (2 * (x_test.reshape(-1, 784) / 255) - 1).astype(np.float32)
 
 # Convert to {-1, 1}.
 y_train = (2 * tf.one_hot(y_train, 10) - 1).numpy()
@@ -71,7 +71,7 @@ model.compile(optimizer=opt,
 
 # <codecell>
 
-# model.fit(x_train, y_train, batch_size=batch_size, epochs=1, callbacks=[callback], validation_data=(x_val, y_val))
+# model.fit(x_train, y_train, batch_size=batch_size, epochs=2, callbacks=[callback], validation_data=(x_val, y_val))
 
 # <codecell>
 
