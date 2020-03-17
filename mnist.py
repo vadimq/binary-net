@@ -26,7 +26,15 @@ lr_final = .0000003
 lr_decay = (lr_final / lr_initial) ** (1 / epochs)
 save_path = "checkpoints/mnist_parameters"
 
-tf.random.set_seed(seed)
+tf.random.set_seed(seed)  # Doesn't work well with distributed training.
+
+# <codecell>
+
+# cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
+# tf.config.experimental_connect_to_cluster(cluster_resolver)
+# tf.tpu.experimental.initialize_tpu_system(cluster_resolver)
+# tpu_strategy = tf.distribute.experimental.TPUStrategy(cluster_resolver)
+tpu_strategy = tf.distribute.OneDeviceStrategy(device="/cpu:0")
 
 # <codecell>
 
@@ -53,13 +61,12 @@ val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val)).cache() \
 test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test)).cache() \
                               .batch(batch_size, drop_remainder=True)
 
-# <codecell>
-
-cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
-tf.config.experimental_connect_to_cluster(cluster_resolver)
-tf.tpu.experimental.initialize_tpu_system(cluster_resolver)
-tpu_strategy = tf.distribute.experimental.TPUStrategy(cluster_resolver)
-# tpu_strategy = tf.distribute.OneDeviceStrategy(device="/cpu:0")
+train_dataset = tpu_strategy.experimental_make_numpy_dataset((x_train, y_train)) \
+                            .cache() \
+                            .shuffle(x_train.shape[0],
+                                     reshuffle_each_iteration=True) \
+                            .batch(batch_size, drop_remainder=True)
+train_dataset_dist = tpu_strategy.experimental_distribute_dataset(train_dataset)
 
 # <codecell>
 
@@ -88,41 +95,47 @@ with tpu_strategy.scope():
 
 # <codecell>
 
-model.fit(train_dataset, epochs=2, callbacks=[callback], validation_data=val_dataset)
+# model.fit(train_dataset, epochs=2, callbacks=[callback], validation_data=val_dataset)
 
 # <codecell>
 
-@tf.function
 def train_batch(x, y):
-    w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
-         if isinstance(l, binary_net.Dense)]
-
     with tf.GradientTape() as tape:
         y_ = model(x, training=True)
-        loss = tf.reduce_mean(tf.keras.losses.squared_hinge(y, y_))
+        loss = tf.nn.compute_average_loss(tf.keras.losses.squared_hinge(y, y_),
+                                          global_batch_size=batch_size)
     vars = model.trainable_variables
     grads = tape.gradient(loss, vars)
     opt.apply_gradients(zip(grads, vars))
-
-    for e in w:
-        val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
-        val = tf.clip_by_value(val, -1, 1)
-        e[1].assign(val)
     return loss
 
+@tf.function
+def train_epoch(dataset):
+    loss = 0.
+    batches = 0.
+    for inputs in dataset:
+        w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
+             if isinstance(l, binary_net.Dense)]
+
+        l = tpu_strategy.experimental_run_v2(train_batch, inputs)
+        loss += tpu_strategy.reduce(tf.distribute.ReduceOp.MEAN, l, axis=None)
+        batches += 1
+
+        for e in w:
+            val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
+            val = tf.clip_by_value(val, -1, 1)
+            e[1].assign(val)
+    return loss / batches
+
 def train(num_epochs):
-    global x_train
     best_val_err = 100
     best_epoch = 1
-    batches = x_train.shape[0] // batch_size
     for i in range(num_epochs):
         start = time.time()
         callback.on_epoch_begin(i)
 
-        loss = 0
-        for x, y in train_dataset:
-            loss += train_batch(x, y)
-        loss /= batches
+        with tpu_strategy.scope():
+            loss = train_epoch(train_dataset_dist)
 
         result = model.evaluate(val_dataset, verbose=0)
         result[2] = (1 - result[2]) * 100
@@ -145,5 +158,5 @@ def train(num_epochs):
 
 # <codecell>
 
-# train(epochs)
-# model.evaluate(test_dataset)
+train(epochs)
+model.evaluate(test_dataset)
