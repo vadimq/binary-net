@@ -26,7 +26,6 @@ lr_final = .0000003
 lr_decay = (lr_final / lr_initial) ** (1 / epochs)
 save_path = "checkpoints/mnist_parameters"
 
-np.random.seed(seed)
 tf.random.set_seed(seed)
 
 # <codecell>
@@ -45,10 +44,14 @@ y_test = (2 * tf.one_hot(y_test, 10) - 1).numpy()
 x_val, x_train = x_train[50000:], x_train[:50000]
 y_val, y_train = y_train[50000:], y_train[:50000]
 
-train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)) \
+train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).cache() \
+                               .shuffle(x_train.shape[0],
+                                        reshuffle_each_iteration=True) \
                                .batch(batch_size, drop_remainder=True)
-val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val)) \
+val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val)).cache() \
                              .batch(batch_size, drop_remainder=True)
+test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test)).cache() \
+                              .batch(batch_size, drop_remainder=True)
 
 # <codecell>
 
@@ -89,18 +92,14 @@ model.fit(train_dataset, epochs=2, callbacks=[callback], validation_data=val_dat
 
 # <codecell>
 
-def shuffle(x, y):
-    order = np.random.permutation(x.shape[0])
-    return x[order], y[order]
-
 @tf.function
-def train_batch(x_train_slice, y_train_slice):
+def train_batch(x, y):
     w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
          if isinstance(l, binary_net.Dense)]
 
     with tf.GradientTape() as tape:
-        y_ = model(x_train_slice, training=True)
-        loss = tf.reduce_mean(tf.keras.losses.squared_hinge(y_train_slice, y_))
+        y_ = model(x, training=True)
+        loss = tf.reduce_mean(tf.keras.losses.squared_hinge(y, y_))
     vars = model.trainable_variables
     grads = tape.gradient(loss, vars)
     opt.apply_gradients(zip(grads, vars))
@@ -112,23 +111,20 @@ def train_batch(x_train_slice, y_train_slice):
     return loss
 
 def train(num_epochs):
-    global x_train, y_train
+    global x_train
     best_val_err = 100
     best_epoch = 1
     batches = x_train.shape[0] // batch_size
     for i in range(num_epochs):
         start = time.time()
         callback.on_epoch_begin(i)
-        x_train, y_train = shuffle(x_train, y_train)
 
         loss = 0
-        for j in range(batches):
-            x_train_slice = x_train[j * batch_size:(j + 1) * batch_size]
-            y_train_slice = y_train[j * batch_size:(j + 1) * batch_size]
-            loss += train_batch(x_train_slice, y_train_slice)
+        for x, y in train_dataset:
+            loss += train_batch(x, y)
         loss /= batches
 
-        result = model.evaluate(x_val, y_val, batch_size=batch_size, verbose=0)
+        result = model.evaluate(val_dataset, verbose=0)
         result[2] = (1 - result[2]) * 100
         if result[2] <= best_val_err:
             best_val_err = result[2]
@@ -150,4 +146,4 @@ def train(num_epochs):
 # <codecell>
 
 # train(epochs)
-# model.evaluate(x_test, y_test, batch_size=batch_size)
+# model.evaluate(test_dataset)
