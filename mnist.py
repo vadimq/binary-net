@@ -99,6 +99,7 @@ with strategy.scope():
 
 # <codecell>
 
+@tf.function
 def train_batch(x, y):
     with tf.GradientTape() as tape:
         y_ = model(x, training=True)
@@ -109,22 +110,21 @@ def train_batch(x, y):
     opt.apply_gradients(zip(grads, vars))
     return loss
 
-@tf.function
 def train_epoch(dataset):
     loss = 0.
     batches = 0.
     for inputs in dataset:
-        w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
-             if isinstance(l, binary_net.Dense)]
+        # w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
+        #      if isinstance(l, binary_net.Dense)]
 
         l = strategy.experimental_run_v2(train_batch, inputs)
         loss += strategy.reduce(tf.distribute.ReduceOp.MEAN, l, axis=None)
         batches += 1
 
-        for e in w:
-            val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
-            val = tf.clip_by_value(val, -1, 1)
-            e[1].assign(val)
+        # for e in w:
+        #     val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
+        #     val = tf.clip_by_value(val, -1, 1)
+        #     e[1].assign(val)
     return loss / batches
 
 def train(num_epochs):
@@ -143,8 +143,8 @@ def train(num_epochs):
             best_val_err = result[2]
             best_epoch = i + 1
 
-            if save_path is not None:
-                model.save_weights(save_path)
+            # if save_path is not None:
+            #     model.save_weights(save_path)
 
         duration = time.time() - start
         lr = opt._decayed_lr(tf.float32).numpy()
