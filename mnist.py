@@ -1,4 +1,4 @@
-# !pip install -U tensorflow
+# %tensorflow_version 2.x
 from tensorflow.python.client import device_lib
 # print(device_lib.list_local_devices())
 
@@ -15,6 +15,7 @@ batch_size = 100
 momentum = .9
 units = 4096
 # units = 2048
+# units = 128
 hidden_layers = 3
 epochs = 1000
 dropout_in = .2
