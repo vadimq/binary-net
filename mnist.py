@@ -1,4 +1,4 @@
-# !pip install -U tensorflow
+# %tensorflow_version 2.x
 from tensorflow.python.client import device_lib
 # print(device_lib.list_local_devices())
 
@@ -30,11 +30,11 @@ tf.random.set_seed(seed)  # Doesn't work well with distributed training.
 
 # <codecell>
 
-# cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
-# tf.config.experimental_connect_to_cluster(cluster_resolver)
-# tf.tpu.experimental.initialize_tpu_system(cluster_resolver)
-# strategy = tf.distribute.experimental.TPUStrategy(cluster_resolver)
-strategy = tf.distribute.OneDeviceStrategy(device="/cpu:0")
+cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
+tf.config.experimental_connect_to_cluster(cluster_resolver)
+tf.tpu.experimental.initialize_tpu_system(cluster_resolver)
+strategy = tf.distribute.experimental.TPUStrategy(cluster_resolver)
+# strategy = tf.distribute.OneDeviceStrategy(device="/cpu:0")
 
 # <codecell>
 
@@ -61,12 +61,12 @@ val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val)).cache() \
 test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test)).cache() \
                               .batch(batch_size, drop_remainder=True)
 
-train_dataset = strategy.experimental_make_numpy_dataset((x_train, y_train)) \
-                        .cache() \
-                        .shuffle(x_train.shape[0],
-                                 reshuffle_each_iteration=True) \
-                        .batch(batch_size, drop_remainder=True)
-train_dataset_dist = strategy.experimental_distribute_dataset(train_dataset)
+train_dataset2 = strategy.experimental_make_numpy_dataset((x_train, y_train)) \
+                         .cache() \
+                         .shuffle(x_train.shape[0],
+                                  reshuffle_each_iteration=True) \
+                         .batch(batch_size, drop_remainder=True)
+train_dataset_dist = strategy.experimental_distribute_dataset(train_dataset2)
 
 # <codecell>
 
