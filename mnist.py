@@ -33,8 +33,8 @@ tf.random.set_seed(seed)  # Doesn't work well with distributed training.
 # cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
 # tf.config.experimental_connect_to_cluster(cluster_resolver)
 # tf.tpu.experimental.initialize_tpu_system(cluster_resolver)
-# tpu_strategy = tf.distribute.experimental.TPUStrategy(cluster_resolver)
-tpu_strategy = tf.distribute.OneDeviceStrategy(device="/cpu:0")
+# strategy = tf.distribute.experimental.TPUStrategy(cluster_resolver)
+strategy = tf.distribute.OneDeviceStrategy(device="/cpu:0")
 
 # <codecell>
 
@@ -61,16 +61,16 @@ val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val)).cache() \
 test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test)).cache() \
                               .batch(batch_size, drop_remainder=True)
 
-train_dataset = tpu_strategy.experimental_make_numpy_dataset((x_train, y_train)) \
-                            .cache() \
-                            .shuffle(x_train.shape[0],
-                                     reshuffle_each_iteration=True) \
-                            .batch(batch_size, drop_remainder=True)
-train_dataset_dist = tpu_strategy.experimental_distribute_dataset(train_dataset)
+train_dataset = strategy.experimental_make_numpy_dataset((x_train, y_train)) \
+                        .cache() \
+                        .shuffle(x_train.shape[0],
+                                 reshuffle_each_iteration=True) \
+                        .batch(batch_size, drop_remainder=True)
+train_dataset_dist = strategy.experimental_distribute_dataset(train_dataset)
 
 # <codecell>
 
-with tpu_strategy.scope():
+with strategy.scope():
     inputs = tf.keras.Input(shape=(784,))
     x = layers.Dropout(dropout_in)(inputs)
     for i in range(hidden_layers):
@@ -117,8 +117,8 @@ def train_epoch(dataset):
         w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
              if isinstance(l, binary_net.Dense)]
 
-        l = tpu_strategy.experimental_run_v2(train_batch, inputs)
-        loss += tpu_strategy.reduce(tf.distribute.ReduceOp.MEAN, l, axis=None)
+        l = strategy.experimental_run_v2(train_batch, inputs)
+        loss += strategy.reduce(tf.distribute.ReduceOp.MEAN, l, axis=None)
         batches += 1
 
         for e in w:
@@ -134,7 +134,7 @@ def train(num_epochs):
         start = time.time()
         callback.on_epoch_begin(i)
 
-        with tpu_strategy.scope():
+        with strategy.scope():
             loss = train_epoch(train_dataset_dist)
 
         result = model.evaluate(val_dataset, verbose=0)
