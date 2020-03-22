@@ -41,6 +41,14 @@ class Dense(tf.keras.layers.Dense):
         self.kernel = kernel
         return rvalue
 
+class Conv2D(tf.keras.layers.Conv2D):
+    def call(self, inputs):
+        kernel = self.kernel
+        self.kernel = sign(self.kernel)
+        rvalue = super(Conv2D, self).call(inputs)
+        self.kernel = kernel
+        return rvalue
+
 class Clip(tf.keras.constraints.Constraint):
     def __call__(self, w):
         return tf.clip_by_value(w, -1, 1)

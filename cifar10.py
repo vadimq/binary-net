@@ -34,26 +34,26 @@ y_val, y_train = y_train[45000:], y_train[:45000]
 # <codecell>
 
 model = tf.keras.Sequential([
-    layers.Conv2D(128, (3, 3), padding="same", input_shape=(32, 32, 3)),
+    binary_net.Conv2D(128, (3, 3), padding="same", input_shape=(32, 32, 3)),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
-    layers.Conv2D(128, (3, 3), padding="same"),
+    binary_net.Conv2D(128, (3, 3), padding="same"),
     layers.MaxPool2D(),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
 
-    layers.Conv2D(256, (3, 3), padding="same"),
+    binary_net.Conv2D(256, (3, 3), padding="same"),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
-    layers.Conv2D(256, (3, 3), padding="same"),
+    binary_net.Conv2D(256, (3, 3), padding="same"),
     layers.MaxPool2D(),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
 
-    layers.Conv2D(512, (3, 3), padding="same"),
+    binary_net.Conv2D(512, (3, 3), padding="same"),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
-    layers.Conv2D(512, (3, 3), padding="same"),
+    binary_net.Conv2D(512, (3, 3), padding="same"),
     layers.MaxPool2D(),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
