@@ -22,6 +22,14 @@ lr_decay = (lr_final / lr_initial) ** (1 / epochs)
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
+w = np.load(r"..\BinaryNet\Train-time\weights.npz")
+init = []
+for i in range(len(w)):
+    w_array = w["arr_{}".format(i)]
+    if len(w_array.shape) == 4:
+        w_array = np.transpose(w_array, (2, 3, 1, 0))
+    init.append(tf.constant_initializer(w_array))
+
 # <codecell>
 
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
@@ -40,16 +48,16 @@ y_val, y_train = y_train[250:350], y_train[:250]
 # <codecell>
 
 model = tf.keras.Sequential([
-    binary_net.Conv2D(32, (3, 3), w_lr_scale=w_lr_scale, padding="same", use_bias=False, input_shape=(32, 32, 3)),
+    binary_net.Conv2D(32, (3, 3), w_lr_scale=w_lr_scale, padding="same", use_bias=False, kernel_initializer=init.pop(0), input_shape=(32, 32, 3)),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False),
     layers.Activation(binary_net.sign_d_clipped),
-    binary_net.Conv2D(32, (3, 3), w_lr_scale=w_lr_scale, padding="same", use_bias=False),
+    binary_net.Conv2D(32, (3, 3), w_lr_scale=w_lr_scale, padding="same", use_bias=False, kernel_initializer=init.pop(0)),
     layers.MaxPool2D(),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False),
     layers.Activation(binary_net.sign_d_clipped),
 
     layers.Flatten(),
-    binary_net.Dense(10, w_lr_scale=w_lr_scale, use_bias=False),
+    binary_net.Dense(10, w_lr_scale=w_lr_scale, use_bias=False, kernel_initializer=init.pop(0)),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False)])
 
 def schedule(epoch, lr):
@@ -68,4 +76,5 @@ model.compile(optimizer=opt,
 # model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_data=(x_val, y_val), shuffle=False)
 for i in range(3):
     binary_net.train(model, x_train, y_train, batch_size, 1, callback, x_val, y_val)
+    print(opt._decayed_lr(tf.float32).numpy())
     print(model(x_train[:10], training=True))
