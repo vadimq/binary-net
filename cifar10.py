@@ -34,8 +34,8 @@ x_test = (2 * (x_test / 255) - 1).astype(np.float32)
 y_train = (2 * tf.one_hot(np.squeeze(y_train), 10) - 1).numpy()
 y_test = (2 * tf.one_hot(np.squeeze(y_test), 10) - 1).numpy()
 
-x_val, x_train = x_train[45000:], x_train[:45000]
-y_val, y_train = y_train[45000:], y_train[:45000]
+x_val, x_train = x_train[250:350], x_train[:250]
+y_val, y_train = y_train[250:350], y_train[:250]
 
 # <codecell>
 
@@ -65,6 +65,7 @@ model.compile(optimizer=opt,
 
 # <codecell>
 
-# model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_data=(x_val, y_val))
-binary_net.train(model, x_train, y_train, batch_size, epochs, callback, x_val, y_val)
-model.evaluate(x_test, y_test, batch_size=batch_size)
+# model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_data=(x_val, y_val), shuffle=False)
+for i in range(3):
+    binary_net.train(model, x_train, y_train, batch_size, 1, callback, x_val, y_val)
+    print(model(x_train[:10], training=True))
