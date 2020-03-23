@@ -77,4 +77,4 @@ model.compile(optimizer=opt,
 for i in range(3):
     binary_net.train(model, x_train, y_train, batch_size, 1, callback, x_val, y_val)
     print(opt._decayed_lr(tf.float32).numpy())
-    print(model(x_train[:10], training=True))
+    print(model(x_val[:batch_size], training=True)[:10])
