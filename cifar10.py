@@ -25,8 +25,8 @@ x_train = (2 * (x_train / 255) - 1).astype(np.float32)
 x_test = (2 * (x_test / 255) - 1).astype(np.float32)
 
 # Convert to {-1, 1}.
-y_train = (2 * tf.one_hot(y_train, 10) - 1).numpy()
-y_test = (2 * tf.one_hot(y_test, 10) - 1).numpy()
+y_train = (2 * tf.one_hot(np.squeeze(y_train), 10) - 1).numpy()
+y_test = (2 * tf.one_hot(np.squeeze(y_test), 10) - 1).numpy()
 
 x_val, x_train = x_train[45000:], x_train[:45000]
 y_val, y_train = y_train[45000:], y_train[:45000]
