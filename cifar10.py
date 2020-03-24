@@ -28,6 +28,7 @@ for i in range(len(w)):
     w_array = w["arr_{}".format(i)]
     if len(w_array.shape) == 4:
         w_array = np.transpose(w_array, (2, 3, 1, 0))
+        w_array = np.flip(w_array, (0, 1))
     init.append(tf.constant_initializer(w_array))
 
 # <codecell>
@@ -56,6 +57,7 @@ model = tf.keras.Sequential([
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False),
     layers.Activation(binary_net.sign_d_clipped),
 
+    tf.keras.layers.Permute((3, 1, 2)),
     layers.Flatten(),
     binary_net.Dense(10, w_lr_scale=w_lr_scale, use_bias=False, kernel_initializer=init.pop(0)),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4, center=False, scale=False)])
