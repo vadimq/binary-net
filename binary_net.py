@@ -42,9 +42,13 @@ class Dense(tf.keras.layers.Dense):
         return rvalue
 
 class Conv2D(tf.keras.layers.Conv2D):
+    def __init__(self, filters, kernel_size, thresh=0, **kwargs):
+        super(Conv2D, self).__init__(filters, kernel_size, **kwargs)
+        self.quantization = quantization(thresh) if thresh else sign
+
     def call(self, inputs):
         kernel = self.kernel
-        self.kernel = sign(self.kernel)
+        self.kernel = self.quantization(self.kernel)
         rvalue = super(Conv2D, self).call(inputs)
         self.kernel = kernel
         return rvalue
