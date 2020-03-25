@@ -21,8 +21,12 @@ def quantization(thresh):
     return q
 
 class Dense(tf.keras.layers.Dense):
-    def __init__(self, units, thresh=0, w_lr_scale="Glorot", **kwargs):
-        super(Dense, self).__init__(units, **kwargs)
+    def __init__(self, units, thresh=0, w_lr_scale="Glorot",
+                 kernel_initializer=tf.random_uniform_initializer(-1, 1),
+                 **kwargs):
+        super(Dense, self).__init__(units,
+                                    kernel_initializer=kernel_initializer,
+                                    **kwargs)
         self.quantization = quantization(thresh) if thresh else sign
         self.w_lr_scale = w_lr_scale
 
@@ -42,8 +46,12 @@ class Dense(tf.keras.layers.Dense):
         return rvalue
 
 class Conv2D(tf.keras.layers.Conv2D):
-    def __init__(self, filters, kernel_size, thresh=0, **kwargs):
-        super(Conv2D, self).__init__(filters, kernel_size, **kwargs)
+    def __init__(self, filters, kernel_size, thresh=0,
+                 kernel_initializer=tf.random_uniform_initializer(-1, 1),
+                 **kwargs):
+        super(Conv2D, self).__init__(filters, kernel_size,
+                                     kernel_initializer=kernel_initializer,
+                                     **kwargs)
         self.quantization = quantization(thresh) if thresh else sign
 
     def call(self, inputs):

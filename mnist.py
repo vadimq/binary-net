@@ -48,15 +48,14 @@ y_val, y_train = y_train[50000:], y_train[:50000]
 
 # <codecell>
 
-ki = tf.random_uniform_initializer(-1, 1)
 inputs = tf.keras.Input(shape=(784,))
 x = layers.Dropout(dropout_in)(inputs)
 for i in range(hidden_layers):
-    x = binary_net.Dense(units, w_lr_scale=w_lr_scale, kernel_initializer=ki)(x)
+    x = binary_net.Dense(units, w_lr_scale=w_lr_scale)(x)
     x = layers.BatchNormalization(momentum=momentum, epsilon=1e-4)(x)
     x = layers.Activation(binary_net.sign_d_clipped)(x)
     x = layers.Dropout(dropout_hidden)(x)
-x = binary_net.Dense(10, w_lr_scale=w_lr_scale, kernel_initializer=ki)(x)
+x = binary_net.Dense(10, w_lr_scale=w_lr_scale)(x)
 outputs = layers.BatchNormalization(momentum=momentum, epsilon=1e-4)(x)
 model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
