@@ -9,12 +9,16 @@ import tensorflow as tf
 from tensorflow.keras import layers
 import binary_net
 
+seed = 0
 batch_size = 50
 momentum = .9
 epochs = 500
 lr_initial = .001
 lr_final = .0000003
 lr_decay = (lr_final / lr_initial) ** (1 / epochs)
+
+np.random.seed(seed)
+tf.random.set_seed(seed)
 
 # <codecell>
 
@@ -82,3 +86,4 @@ model.compile(optimizer=opt,
 # <codecell>
 
 model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_data=(x_val, y_val))
+model.evaluate(x_test, y_test, batch_size=batch_size)
