@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 @tf.custom_gradient
@@ -36,7 +37,8 @@ class Dense(tf.keras.layers.Dense):
             init = tf.sqrt(6 / (input_shape[-1] + self.units))
             # The BinaryConnect paper says that such scaling improves the
             # effectiveness, but doesn't say why.
-            self.w_lr_scale = tf.cast(2 / init, self.dtype)
+            init /= 2
+            self.w_lr_scale = tf.cast(1 / init, self.dtype)
 
     def call(self, inputs):
         kernel = self.kernel
@@ -46,13 +48,23 @@ class Dense(tf.keras.layers.Dense):
         return rvalue
 
 class Conv2D(tf.keras.layers.Conv2D):
-    def __init__(self, filters, kernel_size, thresh=0,
+    def __init__(self, filters, kernel_size, thresh=0, w_lr_scale="Glorot",
                  kernel_initializer=tf.random_uniform_initializer(-1, 1),
                  **kwargs):
         super(Conv2D, self).__init__(filters, kernel_size,
                                      kernel_initializer=kernel_initializer,
                                      **kwargs)
         self.quantization = quantization(thresh) if thresh else sign
+        self.w_lr_scale = w_lr_scale
+
+    def build(self, input_shape):
+        super(Conv2D, self).build(input_shape)
+        if self.w_lr_scale == "Glorot":
+            ca = self._get_channel_axis()
+            init = tf.sqrt(6 / (np.prod(self.kernel_size) * input_shape[ca] +
+                                np.prod(self.kernel_size) * self.filters))
+            init /= 2
+            self.w_lr_scale = tf.cast(1 / init, self.dtype)
 
     def call(self, inputs):
         kernel = self.kernel
