@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import tensorflow as tf
 
@@ -76,3 +77,60 @@ class Conv2D(tf.keras.layers.Conv2D):
 class Clip(tf.keras.constraints.Constraint):
     def __call__(self, w):
         return tf.clip_by_value(w, -1, 1)
+
+def shuffle(x, y):
+    order = np.random.permutation(x.shape[0])
+    return x[order], y[order]
+
+def train(model, x_train, y_train, batch_size, num_epochs, callback, x_val, y_val, save_path):
+    @tf.function
+    def train_batch(x_train_slice, y_train_slice):
+        w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
+             if isinstance(l, Dense)]
+
+        with tf.GradientTape() as tape:
+            y_ = model(x_train_slice, training=True)
+            loss = tf.reduce_mean(tf.keras.losses.squared_hinge(y_train_slice, y_))
+        vars = model.trainable_variables
+        grads = tape.gradient(loss, vars)
+        model.optimizer.apply_gradients(zip(grads, vars))
+
+        for e in w:
+            val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
+            val = tf.clip_by_value(val, -1, 1)
+            e[1].assign(val)
+        return loss
+
+    best_val_err = 100
+    best_epoch = 1
+    batches = x_train.shape[0] // batch_size
+    for i in range(num_epochs):
+        start = time.time()
+        callback.on_epoch_begin(i)
+        x_train, y_train = shuffle(x_train, y_train)
+
+        loss = 0
+        for j in range(batches):
+            x_train_slice = x_train[j * batch_size:(j + 1) * batch_size]
+            y_train_slice = y_train[j * batch_size:(j + 1) * batch_size]
+            loss += train_batch(x_train_slice, y_train_slice)
+        loss /= batches
+
+        result = model.evaluate(x_val, y_val, batch_size=batch_size, verbose=0)
+        result[2] = (1 - result[2]) * 100
+        if result[2] <= best_val_err:
+            best_val_err = result[2]
+            best_epoch = i + 1
+
+            if save_path is not None:
+                model.save_weights(save_path)
+
+        duration = time.time() - start
+        lr = model.optimizer._decayed_lr(tf.float32).numpy()
+        print("Epoch {} of {} took {} s.".format(i + 1, num_epochs, duration))
+        print("  LR:                         {}".format(lr))
+        print("  training loss:              {}".format(loss))
+        print("  validation loss:            {}".format(result[0]))
+        print("  validation error rate:      {}%".format(result[2]))
+        print("  best epoch:                 {}".format(best_epoch))
+        print("  best validation error rate: {}%".format(best_val_err))
