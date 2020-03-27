@@ -108,7 +108,7 @@ def train(model, x, y, batch_size, epochs, callback, x_val, y_val,
     for i in range(epochs):
         start = time.time()
         callback.on_epoch_begin(i)
-        x, y = shuffle(x, y)
+        # x, y = shuffle(x, y)
 
         loss = 0
         for j in range(batches):
