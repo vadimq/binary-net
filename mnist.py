@@ -7,7 +7,6 @@ from tensorflow.python.client import device_lib
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
-import time
 import binary_net
 
 seed = 0
@@ -72,6 +71,6 @@ model.compile(optimizer=opt,
 
 # <codecell>
 
-# model.fit(x_train, y_train, batch_size=batch_size, epochs=2, callbacks=[callback], validation_data=(x_val, y_val))
+# model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_data=(x_val, y_val))
 binary_net.train(model, x_train, y_train, batch_size, epochs, callback, x_val, y_val, save_path)
 model.evaluate(x_test, y_test, batch_size=batch_size)

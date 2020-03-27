@@ -13,6 +13,8 @@ seed = 0
 batch_size = 50
 momentum = .9
 epochs = 500
+# w_lr_scale = 1
+w_lr_scale = "Glorot"
 lr_initial = .001
 lr_final = .0000003
 lr_decay = (lr_final / lr_initial) ** (1 / epochs)
@@ -38,38 +40,39 @@ y_val, y_train = y_train[45000:], y_train[:45000]
 # <codecell>
 
 model = tf.keras.Sequential([
-    binary_net.Conv2D(128, (3, 3), padding="same", input_shape=(32, 32, 3)),
+    binary_net.Conv2D(128, (3, 3), w_lr_scale=w_lr_scale, padding="same",
+                      input_shape=(32, 32, 3)),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
-    binary_net.Conv2D(128, (3, 3), padding="same"),
+    binary_net.Conv2D(128, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
     layers.MaxPool2D(),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
 
-    binary_net.Conv2D(256, (3, 3), padding="same"),
+    binary_net.Conv2D(256, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
-    binary_net.Conv2D(256, (3, 3), padding="same"),
+    binary_net.Conv2D(256, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
     layers.MaxPool2D(),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
 
-    binary_net.Conv2D(512, (3, 3), padding="same"),
+    binary_net.Conv2D(512, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
-    binary_net.Conv2D(512, (3, 3), padding="same"),
+    binary_net.Conv2D(512, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
     layers.MaxPool2D(),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
 
     layers.Flatten(),
-    binary_net.Dense(1024),
+    binary_net.Dense(1024, w_lr_scale=w_lr_scale),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
-    binary_net.Dense(1024),
+    binary_net.Dense(1024, w_lr_scale=w_lr_scale),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
-    binary_net.Dense(10),
+    binary_net.Dense(10, w_lr_scale=w_lr_scale),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4)])
 
 def schedule(epoch, lr):
@@ -85,5 +88,6 @@ model.compile(optimizer=opt,
 
 # <codecell>
 
-model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_data=(x_val, y_val))
+# model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_data=(x_val, y_val))
+binary_net.train(model, x_train, y_train, batch_size, epochs, callback, x_val, y_val)
 model.evaluate(x_test, y_test, batch_size=batch_size)

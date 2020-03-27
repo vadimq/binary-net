@@ -87,7 +87,7 @@ def train(model, x, y, batch_size, epochs, callback, x_val, y_val,
     @tf.function
     def train_batch(x, y):
         w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
-             if isinstance(l, Dense)]
+             if isinstance(l, Dense) or isinstance(l, Conv2D)]
 
         with tf.GradientTape() as tape:
             y_ = model(x, training=True)
@@ -114,6 +114,7 @@ def train(model, x, y, batch_size, epochs, callback, x_val, y_val,
         for j in range(batches):
             loss += train_batch(x[j * batch_size:(j + 1) * batch_size],
                                 y[j * batch_size:(j + 1) * batch_size])
+            # print(j, loss / (j + 1))
         loss /= batches
 
         result = model.evaluate(x_val, y_val, batch_size=batch_size, verbose=0)
