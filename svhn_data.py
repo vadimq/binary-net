@@ -1,4 +1,5 @@
 import itertools
+import tensorflow as tf
 import tensorflow_datasets as tfds
 
 def gen_train(ds, num_val):
@@ -29,10 +30,16 @@ def make_data(num_val_train=400, num_val_extra=200):
     extra_ds = tfds.load("svhn_cropped", split="extra", shuffle_files=True,
                          as_supervised=True, read_config=read_config)
     return (
-        itertools.chain(gen_train(train_ds, num_val_train),
-                        gen_train(extra_ds, num_val_extra)),
-        itertools.chain(gen_val(train_ds, num_val_train),
-                        gen_val(extra_ds, num_val_extra)),
+        tf.data.Dataset.from_generator(
+            lambda: itertools.chain(gen_train(train_ds, num_val_train),
+                                    gen_train(extra_ds, num_val_extra)),
+            output_types=(tf.uint8, tf.int64),
+            output_shapes=((32, 32, 3), ())),
+        tf.data.Dataset.from_generator(
+            lambda: itertools.chain(gen_val(train_ds, num_val_train),
+                                    gen_val(extra_ds, num_val_extra)),
+            output_types=(tf.uint8, tf.int64),
+            output_shapes=((32, 32, 3), ())),
         test_ds
     )
 
