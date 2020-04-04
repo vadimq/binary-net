@@ -22,13 +22,16 @@ def gen_val(ds, num_val):
         if done == 10:
             break
 
-def make_data(num_val_train=400, num_val_extra=200):
-    read_config = tfds.ReadConfig()
-    read_config.options.experimental_deterministic = False
-    train_ds = tfds.load("svhn_cropped", split="train", as_supervised=True)
+def make_data(num_val_train=400, num_val_extra=200, buffer_size=1024, seed=0):
+    train_ds = tfds.load("svhn_cropped", split="train", as_supervised=True) \
+                   .shuffle(buffer_size, seed=seed,
+                            reshuffle_each_iteration=False)
     test_ds = tfds.load("svhn_cropped", split="test", as_supervised=True)
     extra_ds = tfds.load("svhn_cropped", split="extra", shuffle_files=True,
-                         as_supervised=True, read_config=read_config)
+                         as_supervised=True,
+                         read_config=tfds.ReadConfig(shuffle_seed=seed)) \
+                   .shuffle(buffer_size, seed=seed,
+                            reshuffle_each_iteration=False)
     return (
         tf.data.Dataset.from_generator(
             lambda: itertools.chain(gen_train(train_ds, num_val_train),
