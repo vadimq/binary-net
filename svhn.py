@@ -8,6 +8,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 import binary_net
+import svhn_data
 
 seed = 0
 batch_size = 50
@@ -24,18 +25,18 @@ tf.random.set_seed(seed)
 
 # <codecell>
 
-(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+def preprocess(x, y):
+    # Convert to [-1, 1].
+    x = 2 * (x / 255) - 1
 
-# Convert to [-1, 1].
-x_train = (2 * (x_train / 255) - 1).astype(np.float32)
-x_test = (2 * (x_test / 255) - 1).astype(np.float32)
+    # Convert to {-1, 1}.
+    y = 2 * tf.one_hot(y, 10) - 1
+    return x, y
 
-# Convert to {-1, 1}.
-y_train = (2 * tf.one_hot(np.squeeze(y_train), 10) - 1).numpy()
-y_test = (2 * tf.one_hot(np.squeeze(y_test), 10) - 1).numpy()
-
-x_val, x_train = x_train[45000:], x_train[:45000]
-y_val, y_train = y_train[45000:], y_train[:45000]
+train_ds, val_ds, test_ds = svhn_data.make_data()
+train_ds = train_ds.shuffle(1024).batch(batch_size).map(preprocess)
+val_ds = val_ds.batch(batch_size).map(preprocess)
+test_ds = test_ds.batch(batch_size).map(preprocess)
 
 # <codecell>
 
@@ -88,6 +89,6 @@ model.compile(optimizer=opt,
 
 # <codecell>
 
-# model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_data=(x_val, y_val))
-binary_net.train(model, x_train, y_train, batch_size, epochs, callback, x_val, y_val)
-model.evaluate(x_test, y_test, batch_size=batch_size)
+model.fit(train_ds, epochs=epochs, callbacks=[callback], validation_data=val_ds)
+# binary_net.train(model, x_train, y_train, batch_size, epochs, callback, x_val, y_val)
+model.evaluate(test_ds)

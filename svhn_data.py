@@ -33,12 +33,12 @@ def make_data(num_val_train=400, num_val_extra=200):
         tf.data.Dataset.from_generator(
             lambda: itertools.chain(gen_train(train_ds, num_val_train),
                                     gen_train(extra_ds, num_val_extra)),
-            output_types=(tf.uint8, tf.int64),
+            output_types=(tf.float32, tf.int64),
             output_shapes=((32, 32, 3), ())),
         tf.data.Dataset.from_generator(
             lambda: itertools.chain(gen_val(train_ds, num_val_train),
                                     gen_val(extra_ds, num_val_extra)),
-            output_types=(tf.uint8, tf.int64),
+            output_types=(tf.float32, tf.int64),
             output_shapes=((32, 32, 3), ())),
         test_ds
     )
