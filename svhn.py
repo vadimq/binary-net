@@ -34,9 +34,12 @@ def preprocess(x, y):
     return x, y
 
 train_ds, val_ds, test_ds = svhn_data.make_data()
-train_ds = train_ds.shuffle(1024).batch(batch_size).map(preprocess)
-val_ds = val_ds.batch(batch_size).map(preprocess)
-test_ds = test_ds.batch(batch_size).map(preprocess)
+train_ds = train_ds.shuffle(1024).batch(batch_size).map(preprocess) \
+                   .prefetch(tf.data.experimental.AUTOTUNE)
+val_ds = val_ds.batch(batch_size).map(preprocess) \
+               .prefetch(tf.data.experimental.AUTOTUNE)
+test_ds = test_ds.batch(batch_size).map(preprocess) \
+                 .prefetch(tf.data.experimental.AUTOTUNE)
 
 # <codecell>
 
