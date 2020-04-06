@@ -92,6 +92,6 @@ model.compile(optimizer=opt,
 
 # <codecell>
 
-model.fit(train_ds, epochs=epochs, callbacks=[callback], validation_data=val_ds)
-# binary_net.train(model, x_train, y_train, batch_size, epochs, callback, x_val, y_val)
+# model.fit(train_ds, epochs=epochs, callbacks=[callback], validation_data=val_ds)
+binary_net.train2(model, train_ds, epochs, callback, val_ds)
 model.evaluate(test_ds)

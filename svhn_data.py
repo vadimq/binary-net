@@ -2,18 +2,18 @@ import itertools
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-def gen_train(ds, num_val):
+def gen_train(dataset, num_val):
     found = {k: 0 for k in range(10)}
-    for x, y in ds:
+    for x, y in dataset:
         if found[y.numpy()] < num_val:
             found[y.numpy()] += 1
         else:
             yield x, y
 
-def gen_val(ds, num_val):
+def gen_val(dataset, num_val):
     done = 0
     found = {k: 0 for k in range(10)}
-    for x, y in ds:
+    for x, y in dataset:
         if found[y.numpy()] < num_val:
             found[y.numpy()] += 1
             if found[y.numpy()] == num_val:
