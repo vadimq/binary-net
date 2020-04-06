@@ -13,11 +13,11 @@ import svhn_data
 seed = 0
 batch_size = 50
 momentum = .9
-epochs = 500
+epochs = 200
 # w_lr_scale = 1
 w_lr_scale = "Glorot"
 lr_initial = .001
-lr_final = .0000003
+lr_final = .000001
 lr_decay = (lr_final / lr_initial) ** (1 / epochs)
 
 np.random.seed(seed)
@@ -44,8 +44,16 @@ test_ds = test_ds.batch(batch_size).map(preprocess) \
 # <codecell>
 
 model = tf.keras.Sequential([
-    binary_net.Conv2D(128, (3, 3), w_lr_scale=w_lr_scale, padding="same",
+    binary_net.Conv2D(64, (3, 3), w_lr_scale=w_lr_scale, padding="same",
                       input_shape=(32, 32, 3)),
+    layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
+    layers.Activation(binary_net.sign_d_clipped),
+    binary_net.Conv2D(64, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
+    layers.MaxPool2D(),
+    layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
+    layers.Activation(binary_net.sign_d_clipped),
+
+    binary_net.Conv2D(128, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
     binary_net.Conv2D(128, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
@@ -57,14 +65,6 @@ model = tf.keras.Sequential([
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
     binary_net.Conv2D(256, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
-    layers.MaxPool2D(),
-    layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
-    layers.Activation(binary_net.sign_d_clipped),
-
-    binary_net.Conv2D(512, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
-    layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
-    layers.Activation(binary_net.sign_d_clipped),
-    binary_net.Conv2D(512, (3, 3), w_lr_scale=w_lr_scale, padding="same"),
     layers.MaxPool2D(),
     layers.BatchNormalization(momentum=momentum, epsilon=1e-4),
     layers.Activation(binary_net.sign_d_clipped),
