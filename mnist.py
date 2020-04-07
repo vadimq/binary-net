@@ -21,6 +21,7 @@ dropout_in = .2
 dropout_hidden = .5
 # w_lr_scale = 1
 w_lr_scale = "Glorot"
+# Note that we don't use w_lr_scale, but haven't re-tuned the learning rate.
 lr_initial = .003
 lr_final = .0000003
 lr_decay = (lr_final / lr_initial) ** (1 / epochs)
@@ -34,8 +35,8 @@ tf.random.set_seed(seed)  # Doesn't work well with distributed training.
 cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
 tf.config.experimental_connect_to_cluster(cluster_resolver)
 tf.tpu.experimental.initialize_tpu_system(cluster_resolver)
-# strategy = tf.distribute.experimental.TPUStrategy(cluster_resolver)
-strategy = tf.distribute.OneDeviceStrategy(device="/cpu:0")
+strategy = tf.distribute.experimental.TPUStrategy(cluster_resolver)
+# strategy = tf.distribute.OneDeviceStrategy(device="/cpu:0")
 
 # <codecell>
 
@@ -70,11 +71,13 @@ with strategy.scope():
     inputs = tf.keras.Input(shape=(784,))
     x = layers.Dropout(dropout_in)(inputs)
     for i in range(hidden_layers):
-        x = binary_net.Dense(units, w_lr_scale=w_lr_scale)(x)
+        x = binary_net.Dense(units, w_lr_scale=w_lr_scale,
+                             kernel_constraint=binary_net.Clip())(x)
         x = layers.BatchNormalization(momentum=momentum, epsilon=1e-4)(x)
         x = layers.Activation(binary_net.sign_d_clipped)(x)
         x = layers.Dropout(dropout_hidden)(x)
-    x = binary_net.Dense(10, w_lr_scale=w_lr_scale)(x)
+    x = binary_net.Dense(10, w_lr_scale=w_lr_scale,
+                         kernel_constraint=binary_net.Clip())(x)
     outputs = layers.BatchNormalization(momentum=momentum, epsilon=1e-4)(x)
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
@@ -91,6 +94,7 @@ with strategy.scope():
 
 # <codecell>
 
-model.fit(train_ds, epochs=epochs, callbacks=[callback], validation_data=val_ds)
+# %%time
+model.fit(train_ds, epochs=epochs, callbacks=[callback], validation_data=val_ds, validation_freq=20)
 # binary_net.train(model, x_train, y_train, batch_size, epochs, callback, x_val, y_val, save_path)
 model.evaluate(test_ds)
