@@ -4,6 +4,7 @@ from tensorflow.python.client import device_lib
 
 # <codecell>
 
+import time
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
@@ -92,6 +93,61 @@ model.compile(optimizer=opt,
 
 # <codecell>
 
+def train(model, dataset, epochs, callback, validation_data, save_path=None):
+    @tf.function
+    def train_batch(x, y):
+        w = [(l, l.kernel, tf.identity(l.kernel)) for l in model.layers
+             if isinstance(l, binary_net.Dense) or
+                isinstance(l, binary_net.Conv2D)]
+
+        with tf.GradientTape() as tape:
+            y_ = model(x, training=True)
+            loss = tf.reduce_mean(tf.keras.losses.squared_hinge(y, y_))
+        vars = model.trainable_variables
+        grads = tape.gradient(loss, vars)
+        model.optimizer.apply_gradients(zip(grads, vars))
+
+        for e in w:
+            val = e[2] + e[0].w_lr_scale * (e[1] - e[2])
+            val = tf.clip_by_value(val, -1, 1)
+            e[1].assign(val)
+        return loss
+
+    best_val_err = 100
+    best_epoch = 1
+    for i in range(epochs):
+        start = time.time()
+        callback.on_epoch_begin(i)
+
+        batches = 0
+        loss = 0
+        for x, y in dataset:
+            loss += train_batch(x, y)
+            batches += 1
+            # print(batches, loss / batches)
+        loss /= batches
+
+        result = model.evaluate(validation_data, verbose=0)
+        val_err = (1 - result[2]) * 100
+        if val_err <= best_val_err:
+            best_val_err = val_err
+            best_epoch = i + 1
+
+            if save_path is not None:
+                model.save_weights(save_path)
+
+        duration = time.time() - start
+        lr = model.optimizer._decayed_lr(tf.float32).numpy()
+        print("Epoch {} of {} took {} s.".format(i + 1, epochs, duration))
+        print("  LR:                         {}".format(lr))
+        print("  training loss:              {}".format(loss))
+        print("  validation loss:            {}".format(result[0]))
+        print("  validation error rate:      {}%".format(val_err))
+        print("  best epoch:                 {}".format(best_epoch))
+        print("  best validation error rate: {}%".format(best_val_err))
+
+# <codecell>
+
 # model.fit(train_ds, epochs=epochs, callbacks=[callback], validation_data=val_ds)
-binary_net.train2(model, train_ds, epochs, callback, val_ds)
+train(model, train_ds, epochs, callback, val_ds)
 model.evaluate(test_ds)
