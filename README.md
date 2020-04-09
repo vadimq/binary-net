@@ -1,10 +1,6 @@
 This is a reimplementation of Binarized Neural Network (BNN) from the paper [Binarized Neural Networks: Training Deep Neural Networks with Weights and Activations Constrained to +1 or -1](https://arxiv.org/abs/1602.02830). The code is organized similarly to the original [Theano repository](https://github.com/MatthieuCourbariaux/BinaryNet). Inference optimizations aren't included.
 
-# Does it work in exactly the same way as the Theano version?
-
-Conceptually, yes, but the results won't be identical.
-
-There are slight differences in how `Adam` and `Conv2D` work in Theano and TensorFlow. These are enough for the results to quickly diverge when training for many steps and epochs. The accumulation of batch normalization statistics is also slightly different.
+**Does it work in exactly the same way as the Theano version?** Conceptually, yes, but the results won't be identical. There are slight differences in how `Adam` and `Conv2D` work in Theano and TensorFlow. These are enough for the results to diverge (especially fast when using `Conv2D`). The accumulation of batch normalization statistics is also slightly different.
 
 # MNIST
 
